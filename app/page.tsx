@@ -4,10 +4,9 @@ import { InterviewHeader } from "@/components/InterviewHeader";
 import { InterviewSession } from "@/components/InterviewSession";
 import { StartScreen } from "@/components/StartScreen";
 import { useInterview } from "@/hooks/useInterview";
-import { useSpeechToText } from "@/hooks/useSpeechToText";
 
 export default function InterviewPage() {
-  const { isStarted, startInterview, messages } = useInterview();
+  const { isStarted, startInterview } = useInterview();
 
   return (
     <main className="h-screen bg-slate-950 text-white flex flex-col">

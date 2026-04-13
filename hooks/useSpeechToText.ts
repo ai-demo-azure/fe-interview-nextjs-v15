@@ -5,49 +5,57 @@ export const useSpeechToText = () => {
   const [transcript, setTranscript] = useState("");
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
-  interface Window {
-    SpeechRecognition?: typeof SpeechRecognition;
-    webkitSpeechRecognition?: typeof SpeechRecognition;
-  }
+  const isListeningRef = useRef(false);
+
   useEffect(() => {
-    // Kiểm tra xem trình duyệt có hỗ trợ không
     const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true; // Nghe liên tục
-      recognitionRef.current.interimResults = true; // Hiện kết quả tạm thời khi đang nói
-      recognitionRef.current.lang = "vi-VN"; // Hoặc "en-US" nếu phỏng vấn tiếng Anh
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "vi-VN";
 
-      recognitionRef.current.onresult = (event: any) => {
-        let currentTranscript = "";
-        for (let i = 0; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
+    recognition.onresult = (event: any) => {
+      let finalInEvent = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const text = result[0] ? result[0].transcript : result.transcript;
+
+        if (result.isFinal) {
+          finalInEvent += text;
         }
-        setTranscript(currentTranscript);
-      };
+      }
+      if (finalInEvent)
+        setTranscript((prev) => (prev + " " + finalInEvent).trim());
+    };
 
-      recognitionRef.current.onerror = (event: any) => {
-        console.error("Lỗi nhận diện:", event.error);
+    recognition.onend = () => {
+      if (isListeningRef.current) recognition.start();
+    };
+    recognition.onerror = (event: any) => {
+      if (event.error !== "no-speech" && event.error !== "aborted") {
         setIsListening(false);
-      };
-    }
+        isListeningRef.current = false;
+      }
+    };
+
+    recognitionRef.current = recognition;
   }, []);
 
   const startListening = () => {
-    if (recognitionRef.current) {
-      setTranscript("");
-      setIsListening(true);
-      recognitionRef.current.start();
-    }
+    setTranscript("");
+    setIsListening(true);
+    isListeningRef.current = true;
+    recognitionRef.current?.start();
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) {
-      setIsListening(false);
-      recognitionRef.current.stop();
-    }
+    setIsListening(false);
+    isListeningRef.current = false;
+    recognitionRef.current?.stop();
   };
 
   return {
