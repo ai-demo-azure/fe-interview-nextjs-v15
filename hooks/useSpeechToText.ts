@@ -2,8 +2,10 @@
 import { useState, useEffect, useRef } from "react";
 
 export const useSpeechToText = () => {
-  const [transcript, setTranscript] = useState("");
+  const [transcript, setTranscript] = useState(""); // Chữ đã chốt (final)
   const [isListening, setIsListening] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState(""); // Chữ đang nghe (real-time)
+
   const recognitionRef = useRef<any>(null);
   const isListeningRef = useRef(false);
 
@@ -19,17 +21,29 @@ export const useSpeechToText = () => {
     recognition.lang = "vi-VN";
 
     recognition.onresult = (event: any) => {
+      let interim = "";
       let finalInEvent = "";
+
       for (let i = event.resultIndex; i < event.results.length; i++) {
+        // Truy cập an toàn vào dữ liệu transcript
         const result = event.results[i];
-        const text = result[0] ? result[0].transcript : result.transcript;
+        const text = result[0]?.transcript || "";
 
         if (result.isFinal) {
           finalInEvent += text;
+        } else {
+          interim += text;
         }
       }
-      if (finalInEvent)
+
+      // 1. Nếu có phần đã chốt, cập nhật vào transcript chính và xóa phần tạm
+      if (finalInEvent) {
         setTranscript((prev) => (prev + " " + finalInEvent).trim());
+        setInterimTranscript("");
+      } else {
+        // 2. Nếu đang nói, chỉ cập nhật phần tạm thời để hiển thị ngay lập tức
+        setInterimTranscript(interim);
+      }
     };
 
     recognition.onend = () => {
@@ -46,20 +60,31 @@ export const useSpeechToText = () => {
   }, []);
 
   const startListening = () => {
-    setTranscript("");
-    setIsListening(true);
-    isListeningRef.current = true;
-    recognitionRef.current?.start();
+    if (recognitionRef.current) {
+      setTranscript("");
+      setInterimTranscript("");
+      setIsListening(true);
+      isListeningRef.current = true;
+      recognitionRef.current?.start();
+    }
   };
 
   const stopListening = () => {
-    setIsListening(false);
-    isListeningRef.current = false;
-    recognitionRef.current?.stop();
+    if (recognitionRef.current) {
+      setIsListening(false);
+      isListeningRef.current = false;
+      recognitionRef.current?.stop();
+      // Chốt nốt những gì đang nói dở vào transcript chính trước khi reset
+      if (interimTranscript) {
+        setTranscript((prev) => (prev + " " + interimTranscript).trim());
+      }
+      setInterimTranscript(""); // Xóa phần đang nói dở khi dừng
+    }
   };
 
   return {
     transcript,
+    interimTranscript,
     isListening,
     startListening,
     stopListening,

@@ -13,6 +13,7 @@ export const InterviewSession = () => {
   const { messages, isAiTyping, handleSendMessage } = useInterview();
   const {
     transcript,
+    interimTranscript,
     isListening,
     startListening,
     stopListening,
@@ -78,9 +79,19 @@ export const InterviewSession = () => {
           {/* Hiển thị transcript khi đang nghe */}
           <div className="h-12 flex items-center justify-center">
             {isListening && (
-              <div className="bg-slate-900/80 px-4 py-2 rounded-lg border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
-                <p className="text-blue-400 text-center text-sm italic">
-                  {transcript || "Đang nghe..."}
+              <div className="bg-slate-900/80 px-6 py-3 rounded-2xl border border-slate-800 animate-in fade-in zoom-in duration-300 shadow-2xl">
+                <p className="text-center text-base italic leading-relaxed">
+                  <span className="text-blue-400 font-medium">
+                    {transcript}
+                  </span>
+                  <span className="text-slate-500 italic">
+                    {interimTranscript ? ` ${interimTranscript}` : ""}
+                  </span>
+                  {!transcript && !interimTranscript && (
+                    <span className="text-slate-500 animate-pulse">
+                      Mời bạn nói...
+                    </span>
+                  )}
                 </p>
               </div>
             )}
