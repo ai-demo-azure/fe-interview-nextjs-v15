@@ -30,7 +30,7 @@ export const useSpeechToText = () => {
         const text = result[0]?.transcript || "";
 
         if (result.isFinal) {
-          finalInEvent += text;
+          finalInEvent = text;
         } else {
           interim += text;
         }
