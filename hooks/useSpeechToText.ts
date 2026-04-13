@@ -22,28 +22,30 @@ export const useSpeechToText = () => {
 
     recognition.onresult = (event: any) => {
       let interim = "";
-      let finalInEvent = "";
+      let fullFinalTranscript = ""; // Biến chứa toàn bộ nội dung đã nói
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        // Truy cập an toàn vào dữ liệu transcript
+      // Lặp từ đầu (0) đến hết để lấy toàn bộ dữ liệu hiện có trong bộ nhớ API
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
         const text = result[0]?.transcript || "";
-
         if (result.isFinal) {
-          finalInEvent = text;
+          fullFinalTranscript = text; // Gom tất cả các câu đã chốt lại
         } else {
-          interim += text;
+          interim += text; // Gom các từ đang nghe dở
         }
-      }
-
-      // 1. Nếu có phần đã chốt, cập nhật vào transcript chính và xóa phần tạm
-      if (finalInEvent) {
-        setTranscript((prev) => (prev + " " + finalInEvent).trim());
-        setInterimTranscript("");
-      } else {
-        // 2. Nếu đang nói, chỉ cập nhật phần tạm thời để hiển thị ngay lập tức
         setInterimTranscript(interim);
       }
+
+      // Cập nhật theo cách đơn giản của bạn: Ghi đè toàn bộ
+      // if (fullFinalTranscript) {
+      //   setTranscript(fullFinalTranscript.trim());
+      //   setInterimTranscript("");
+      // } else {
+      // setInterimTranscript(interim);
+      // }
+      // Cập nhật cả hai cùng lúc
+      setTranscript(fullFinalTranscript.trim());
+      setInterimTranscript(interim); // Luôn cập nhật phần đang nói
     };
 
     recognition.onend = () => {
